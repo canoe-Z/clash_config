@@ -7,10 +7,11 @@ ipv6: true
 
 dns:
    enable: true
-   enhanced-mode: redir-host # 或 fake-ip
+   ipv6: true
+   enhanced-mode: redir-host
    listen: 0.0.0.0:53
    nameserver:
-      - 223.5.5.5
+      - "[2400:3200::1]:53"
 interface-name: WLAN # 物理网卡名称
 
 proxies:
