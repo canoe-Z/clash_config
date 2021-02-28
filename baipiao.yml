@@ -1,40 +1,55 @@
 mixed-port: 7890
-allow-lan: false
+allow-lan: true
 log-level: info
-external-controller: '127.0.0.1:9090'
-secret: ''
+external-controller: "0.0.0.0:9090"
+secret: ""
 ipv6: true
-
 dns:
-   enable: true
-   ipv6: true
-   enhanced-mode: redir-host
-   listen: 0.0.0.0:53
-   nameserver:
-      - 223.5.5.5
-interface-name: WLAN # 物理网卡名称
+  enable: true
+  ipv6: true
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  listen: 0.0.0.0:53
+  nameserver:
+    - 114.114.114.114
+    - "tcp://223.5.5.5"
+  fallback:
+    - "tls://223.5.5.5:853"
+    - "https://223.5.5.5/dns-query"
+  fallback-filter:
+    geoip: true
+    ipcidr:
+      - 240.0.0.0/4
 
 proxies:
-  # socks5
-  - name: "openclash"
-    type: socks5
-    server: canoe.dynv6.net
-    port: 7891
-    # username: username
-    # password: password
-    # tls: true # https
+  # vmess
+  # cipher support auto/aes-128-gcm/chacha20-poly1305/none
+  - name: "DMIT"
+    type: vmess
+    server: "2403:18c0:3:193::"
+    port: 24768
+    uuid: c83bf886-1624-4f41-9561-754bdab0c4c6
+    alterId: 16
+    cipher: auto
+    udp: true
+    # tls: true
     # skip-cert-verify: true
+    # servername: example.com # priority over wss host
+    # network: ws
+    # ws-path: /path
+    # ws-headers:
+    #   Host: v2ray.com
     
   # vmess
   # cipher support auto/aes-128-gcm/chacha20-poly1305/none
-  - name: "vmess"
+  - name: "Home"
     type: vmess
-    server: canoe.dynv6.net
-    port: 12366
+    server: "canoe.dynv6.net"
+    port: 22366
     uuid: fd00927a-b0c2-4629-aef7-d9ff15a9d722
     alterId: 16
     cipher: auto
-    # udp: true
+    udp: true
     # tls: true
     # skip-cert-verify: true
     # servername: example.com # priority over wss host
@@ -44,15 +59,388 @@ proxies:
     #   Host: v2ray.com
 
 proxy-groups:
-  # relay chains the proxies. proxies shall not contain a relay. No UDP support.
-  # Traffic: clash <-> http <-> vmess <-> ss1 <-> ss2 <-> Internet
-  - name: "relay"
-    type: relay
+  # select is used for selecting proxy or proxy group
+  # you can use RESTful API to switch proxy is recommended for use in GUI.
+  - name: ✈️出国免流
+    type: select
+    # disable-udp: true
     proxies:
-      - vmess
-      - openclash
-      
+      - DMIT
+      - Home
+      - DIRECT
+
+  - name: 🔰国内免流
+    type: select
+    # disable-udp: true
+    proxies:
+      - DMIT
+      - Home
+      - DIRECT
+
+  - name: ⚓️校园网直连
+    type: select
+    proxies:
+      - DMIT
+      - Home
+      - DIRECT
+
 rules:
-  - IP-CIDR,10.0.0.0/8,DIRECT
-  - DOMAIN-SUFFIX,buaa.edu.cn,DIRECT
-  - MATCH,relay
+  - DOMAIN-SUFFIX,local,DIRECT,no-resolve
+  - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,100.64.0.0/10,DIRECT,no-resolve
+  - IP-CIDR6,::1/128,DIRECT,no-resolve
+  - IP-CIDR6,fc00::/7,DIRECT,no-resolve
+  - IP-CIDR6,fe80::/10,DIRECT,no-resolve
+  - IP-CIDR6,fd00::/8,DIRECT,no-resolve
+
+  - IP-CIDR,10.0.0.0/8,⚓️校园网直连,no-resolve
+  - DOMAIN-SUFFIX,buaa.edu.cn,⚓️校园网直连
+
+  - IP-CIDR,192.168.0.0/16,🔰国内免流,no-resolve
+  - DOMAIN,app.adjust.com,🔰国内免流
+  - DOMAIN-SUFFIX,googletraveladservices.com,🔰国内免流
+  - DOMAIN,dl.google.com,🔰国内免流
+  - DOMAIN,mtalk.google.com,🔰国内免流
+  - DOMAIN,livew.l.qq.com,🔰国内免流
+  - DOMAIN,vd.l.qq.com,🔰国内免流
+  - DOMAIN,analytics.strava.com,🔰国内免流
+  - DOMAIN,msg.umeng.com,🔰国内免流
+  - DOMAIN,msg.umengcloud.com,🔰国内免流
+  - DOMAIN-SUFFIX,qhres.com,🔰国内免流
+  - DOMAIN-SUFFIX,qhimg.com,🔰国内免流
+  - DOMAIN-SUFFIX,akadns.net,🔰国内免流
+  - DOMAIN-SUFFIX,alibaba.com,🔰国内免流
+  - DOMAIN-SUFFIX,alicdn.com,🔰国内免流
+  - DOMAIN-SUFFIX,alikunlun.com,🔰国内免流
+  - DOMAIN-SUFFIX,alipay.com,🔰国内免流
+  - DOMAIN-SUFFIX,amap.com,🔰国内免流
+  - DOMAIN-SUFFIX,autonavi.com,🔰国内免流
+  - DOMAIN-SUFFIX,dingtalk.com,🔰国内免流
+  - DOMAIN-SUFFIX,mxhichina.com,🔰国内免流
+  - DOMAIN-SUFFIX,soku.com,🔰国内免流
+  - DOMAIN-SUFFIX,taobao.com,🔰国内免流
+  - DOMAIN-SUFFIX,tmall.com,🔰国内免流
+  - DOMAIN-SUFFIX,tmall.hk,🔰国内免流
+  - DOMAIN-SUFFIX,ykimg.com,🔰国内免流
+  - DOMAIN-SUFFIX,youku.com,🔰国内免流
+  - DOMAIN-SUFFIX,xiami.com,🔰国内免流
+  - DOMAIN-SUFFIX,xiami.net,🔰国内免流
+  - DOMAIN-SUFFIX,aaplimg.com,🔰国内免流
+  - DOMAIN-SUFFIX,apple.co,🔰国内免流
+  - DOMAIN-SUFFIX,apple.com,🔰国内免流
+  - DOMAIN-SUFFIX,apple-cloudkit.com,🔰国内免流
+  - DOMAIN-SUFFIX,appstore.com,🔰国内免流
+  - DOMAIN-SUFFIX,cdn-apple.com,🔰国内免流
+  - DOMAIN-SUFFIX,crashlytics.com,🔰国内免流
+  - DOMAIN-SUFFIX,icloud.com,🔰国内免流
+  - DOMAIN-SUFFIX,icloud-content.com,🔰国内免流
+  - DOMAIN-SUFFIX,me.com,🔰国内免流
+  - DOMAIN-SUFFIX,mzstatic.com,🔰国内免流
+  - DOMAIN,www-cdn.icloud.com.akadns.net,🔰国内免流
+  - DOMAIN-SUFFIX,baidu.com,🔰国内免流
+  - DOMAIN-SUFFIX,baidubcr.com,🔰国内免流
+  - DOMAIN-SUFFIX,bdstatic.com,🔰国内免流
+  - DOMAIN-SUFFIX,yunjiasu-cdn.net,🔰国内免流
+  - DOMAIN-SUFFIX,acgvideo.com,🔰国内免流
+  - DOMAIN-SUFFIX,hdslb.com,🔰国内免流
+  - DOMAIN-SUFFIX,blizzard.com,🔰国内免流
+  - DOMAIN-SUFFIX,battle.net,🔰国内免流
+  - DOMAIN,blzddist1-a.akamaihd.net,🔰国内免流
+  - DOMAIN-SUFFIX,feiliao.com,🔰国内免流
+  - DOMAIN-SUFFIX,pstatp.com,🔰国内免流
+  - DOMAIN-SUFFIX,snssdk.com,🔰国内免流
+  - DOMAIN-SUFFIX,iesdouyin.com,🔰国内免流
+  - DOMAIN-SUFFIX,toutiao.com,🔰国内免流
+  - DOMAIN-SUFFIX,cctv.com,🔰国内免流
+  - DOMAIN-SUFFIX,cctvpic.com,🔰国内免流
+  - DOMAIN-SUFFIX,livechina.com,🔰国内免流
+  - DOMAIN-SUFFIX,didialift.com,🔰国内免流
+  - DOMAIN-SUFFIX,didiglobal.com,🔰国内免流
+  - DOMAIN-SUFFIX,udache.com,🔰国内免流
+  - DOMAIN-SUFFIX,343480.com,🔰国内免流
+  - DOMAIN-SUFFIX,baduziyuan.com,🔰国内免流
+  - DOMAIN-SUFFIX,com-hs-hkdy.com,🔰国内免流
+  - DOMAIN-SUFFIX,czybjz.com,🔰国内免流
+  - DOMAIN-SUFFIX,dandanzan.com,🔰国内免流
+  - DOMAIN-SUFFIX,fjhps.com,🔰国内免流
+  - DOMAIN-SUFFIX,kuyunbo.club,🔰国内免流
+  - DOMAIN-SUFFIX,21cn.com,🔰国内免流
+  - DOMAIN-SUFFIX,hitv.com,🔰国内免流
+  - DOMAIN-SUFFIX,mgtv.com,🔰国内免流
+  - DOMAIN-SUFFIX,iqiyi.com,🔰国内免流
+  - DOMAIN-SUFFIX,iqiyipic.com,🔰国内免流
+  - DOMAIN-SUFFIX,71.am.com,🔰国内免流
+  - DOMAIN-SUFFIX,jd.com,🔰国内免流
+  - DOMAIN-SUFFIX,jd.hk,🔰国内免流
+  - DOMAIN-SUFFIX,jdpay.com,🔰国内免流
+  - DOMAIN-SUFFIX,360buyimg.com,🔰国内免流
+  - DOMAIN-SUFFIX,iciba.com,🔰国内免流
+  - DOMAIN-SUFFIX,ksosoft.com,🔰国内免流
+  - DOMAIN-SUFFIX,meitu.com,🔰国内免流
+  - DOMAIN-SUFFIX,meitudata.com,🔰国内免流
+  - DOMAIN-SUFFIX,meitustat.com,🔰国内免流
+  - DOMAIN-SUFFIX,meipai.com,🔰国内免流
+  - DOMAIN-SUFFIX,duokan.com,🔰国内免流
+  - DOMAIN-SUFFIX,mi-img.com,🔰国内免流
+  - DOMAIN-SUFFIX,miui.com,🔰国内免流
+  - DOMAIN-SUFFIX,miwifi.com,🔰国内免流
+  - DOMAIN-SUFFIX,xiaomi.com,🔰国内免流
+  - DOMAIN-SUFFIX,microsoft.com,🔰国内免流
+  - DOMAIN-SUFFIX,msecnd.net,🔰国内免流
+  - DOMAIN-SUFFIX,office365.com,🔰国内免流
+  - DOMAIN-SUFFIX,outlook.com,🔰国内免流
+  - DOMAIN-SUFFIX,s-microsoft.com,🔰国内免流
+  - DOMAIN-SUFFIX,visualstudio.com,🔰国内免流
+  - DOMAIN-SUFFIX,windows.com,🔰国内免流
+  - DOMAIN-SUFFIX,windowsupdate.com,🔰国内免流
+  - DOMAIN,officecdn-microsoft-com.akamaized.net,🔰国内免流
+  - DOMAIN-SUFFIX,163.com,🔰国内免流
+  - DOMAIN-SUFFIX,126.net,🔰国内免流
+  - DOMAIN-SUFFIX,127.net,🔰国内免流
+  - DOMAIN-SUFFIX,163yun.com,🔰国内免流
+  - DOMAIN-SUFFIX,lofter.com,🔰国内免流
+  - DOMAIN-SUFFIX,netease.com,🔰国内免流
+  - DOMAIN-SUFFIX,ydstatic.com,🔰国内免流
+  - DOMAIN-SUFFIX,sina.com,🔰国内免流
+  - DOMAIN-SUFFIX,weibo.com,🔰国内免流
+  - DOMAIN-SUFFIX,weibocdn.com,🔰国内免流
+  - DOMAIN-SUFFIX,sohu.com,🔰国内免流
+  - DOMAIN-SUFFIX,sohucs.com,🔰国内免流
+  - DOMAIN-SUFFIX,sohu-inc.com,🔰国内免流
+  - DOMAIN-SUFFIX,v-56.com,🔰国内免流
+  - DOMAIN-SUFFIX,sogo.com,🔰国内免流
+  - DOMAIN-SUFFIX,sogou.com,🔰国内免流
+  - DOMAIN-SUFFIX,sogoucdn.com,🔰国内免流
+  - DOMAIN-SUFFIX,steampowered.com,🔰国内免流
+  - DOMAIN-SUFFIX,steam-chat.com,🔰国内免流
+  - DOMAIN-SUFFIX,steamgames.com,🔰国内免流
+  - DOMAIN-SUFFIX,steamusercontent.com,🔰国内免流
+  - DOMAIN-SUFFIX,steamcontent.com,🔰国内免流
+  - DOMAIN-SUFFIX,steamstatic.com,🔰国内免流
+  - DOMAIN-SUFFIX,steamcdn-a.akamaihd.net,🔰国内免流
+  - DOMAIN-SUFFIX,steamstat.us,🔰国内免流
+  - DOMAIN-SUFFIX,gtimg.com,🔰国内免流
+  - DOMAIN-SUFFIX,idqqimg.com,🔰国内免流
+  - DOMAIN-SUFFIX,igamecj.com,🔰国内免流
+  - DOMAIN-SUFFIX,myapp.com,🔰国内免流
+  - DOMAIN-SUFFIX,myqcloud.com,🔰国内免流
+  - DOMAIN-SUFFIX,qq.com,🔰国内免流
+  - DOMAIN-SUFFIX,tencent.com,🔰国内免流
+  - DOMAIN-SUFFIX,tencent-cloud.net,🔰国内免流
+  - DOMAIN-SUFFIX,jstucdn.com,🔰国内免流
+  - DOMAIN-SUFFIX,zimuzu.io,🔰国内免流
+  - DOMAIN-SUFFIX,zimuzu.tv,🔰国内免流
+  - DOMAIN-SUFFIX,zmz2019.com,🔰国内免流
+  - DOMAIN-SUFFIX,zmzapi.com,🔰国内免流
+  - DOMAIN-SUFFIX,zmzapi.net,🔰国内免流
+  - DOMAIN-SUFFIX,zmzfile.com,🔰国内免流
+  - DOMAIN-SUFFIX,ccgslb.com,🔰国内免流
+  - DOMAIN-SUFFIX,ccgslb.net,🔰国内免流
+  - DOMAIN-SUFFIX,chinanetcenter.com,🔰国内免流
+  - DOMAIN-SUFFIX,meixincdn.com,🔰国内免流
+  - DOMAIN-SUFFIX,ourdvs.com,🔰国内免流
+  - DOMAIN-SUFFIX,staticdn.net,🔰国内免流
+  - DOMAIN-SUFFIX,wangsu.com,🔰国内免流
+  - DOMAIN-SUFFIX,ipip.net,🔰国内免流
+  - DOMAIN-SUFFIX,ip.la,🔰国内免流
+  - DOMAIN-SUFFIX,ip-cdn.com,🔰国内免流
+  - DOMAIN-SUFFIX,ipv6-test.com,🔰国内免流
+  - DOMAIN-SUFFIX,test-ipv6.com,🔰国内免流
+  - DOMAIN-SUFFIX,whatismyip.com,🔰国内免流
+  - DOMAIN-SUFFIX,netspeedtestmaster.com,🔰国内免流
+  - DOMAIN,speedtest.macpaw.com,🔰国内免流
+  - DOMAIN-SUFFIX,awesome-hd.me,🔰国内免流
+  - DOMAIN-SUFFIX,broadcasthe.net,🔰国内免流
+  - DOMAIN-SUFFIX,chdbits.co,🔰国内免流
+  - DOMAIN-SUFFIX,classix-unlimited.co.uk,🔰国内免流
+  - DOMAIN-SUFFIX,empornium.me,🔰国内免流
+  - DOMAIN-SUFFIX,gazellegames.net,🔰国内免流
+  - DOMAIN-SUFFIX,hdchina.org,🔰国内免流
+  - DOMAIN-SUFFIX,hdsky.me,🔰国内免流
+  - DOMAIN-SUFFIX,icetorrent.org,🔰国内免流
+  - DOMAIN-SUFFIX,jpopsuki.eu,🔰国内免流
+  - DOMAIN-SUFFIX,keepfrds.com,🔰国内免流
+  - DOMAIN-SUFFIX,madsrevolution.net,🔰国内免流
+  - DOMAIN-SUFFIX,m-team.cc,🔰国内免流
+  - DOMAIN-SUFFIX,nanyangpt.com,🔰国内免流
+  - DOMAIN-SUFFIX,ncore.cc,🔰国内免流
+  - DOMAIN-SUFFIX,open.cd,🔰国内免流
+  - DOMAIN-SUFFIX,ourbits.club,🔰国内免流
+  - DOMAIN-SUFFIX,passthepopcorn.me,🔰国内免流
+  - DOMAIN-SUFFIX,privatehd.to,🔰国内免流
+  - DOMAIN-SUFFIX,redacted.ch,🔰国内免流
+  - DOMAIN-SUFFIX,springsunday.net,🔰国内免流
+  - DOMAIN-SUFFIX,tjupt.org,🔰国内免流
+  - DOMAIN-SUFFIX,totheglory.im,🔰国内免流
+  - DOMAIN-SUFFIX,acm.org,🔰国内免流
+  - DOMAIN-SUFFIX,acs.org,🔰国内免流
+  - DOMAIN-SUFFIX,aip.org,🔰国内免流
+  - DOMAIN-SUFFIX,ams.org,🔰国内免流
+  - DOMAIN-SUFFIX,annualreviews.org,🔰国内免流
+  - DOMAIN-SUFFIX,aps.org,🔰国内免流
+  - DOMAIN-SUFFIX,ascelibrary.org,🔰国内免流
+  - DOMAIN-SUFFIX,asm.org,🔰国内免流
+  - DOMAIN-SUFFIX,asme.org,🔰国内免流
+  - DOMAIN-SUFFIX,astm.org,🔰国内免流
+  - DOMAIN-SUFFIX,bmj.com,🔰国内免流
+  - DOMAIN-SUFFIX,cambridge.org,🔰国内免流
+  - DOMAIN-SUFFIX,cas.org,🔰国内免流
+  - DOMAIN-SUFFIX,clarivate.com,🔰国内免流
+  - DOMAIN-SUFFIX,ebscohost.com,🔰国内免流
+  - DOMAIN-SUFFIX,emerald.com,🔰国内免流
+  - DOMAIN-SUFFIX,engineeringvillage.com,🔰国内免流
+  - DOMAIN-SUFFIX,icevirtuallibrary.com,🔰国内免流
+  - DOMAIN-SUFFIX,ieee.org,🔰国内免流
+  - DOMAIN-SUFFIX,imf.org,🔰国内免流
+  - DOMAIN-SUFFIX,iop.org,🔰国内免流
+  - DOMAIN-SUFFIX,jamanetwork.com,🔰国内免流
+  - DOMAIN-SUFFIX,jhu.edu,🔰国内免流
+  - DOMAIN-SUFFIX,jstor.org,🔰国内免流
+  - DOMAIN-SUFFIX,karger.com,🔰国内免流
+  - DOMAIN-SUFFIX,libguides.com,🔰国内免流
+  - DOMAIN-SUFFIX,madsrevolution.net,🔰国内免流
+  - DOMAIN-SUFFIX,mpg.de,🔰国内免流
+  - DOMAIN-SUFFIX,myilibrary.com,🔰国内免流
+  - DOMAIN-SUFFIX,nature.com,🔰国内免流
+  - DOMAIN-SUFFIX,oecd-ilibrary.org,🔰国内免流
+  - DOMAIN-SUFFIX,osapublishing.org,🔰国内免流
+  - DOMAIN-SUFFIX,oup.com,🔰国内免流
+  - DOMAIN-SUFFIX,ovid.com,🔰国内免流
+  - DOMAIN-SUFFIX,oxfordartonline.com,🔰国内免流
+  - DOMAIN-SUFFIX,oxfordbibliographies.com,🔰国内免流
+  - DOMAIN-SUFFIX,oxfordmusiconline.com,🔰国内免流
+  - DOMAIN-SUFFIX,pnas.org,🔰国内免流
+  - DOMAIN-SUFFIX,proquest.com,🔰国内免流
+  - DOMAIN-SUFFIX,rsc.org,🔰国内免流
+  - DOMAIN-SUFFIX,sagepub.com,🔰国内免流
+  - DOMAIN-SUFFIX,science🔰国内免流.com,🔰国内免流
+  - DOMAIN-SUFFIX,sciencemag.org,🔰国内免流
+  - DOMAIN-SUFFIX,scopus.com,🔰国内免流
+  - DOMAIN-SUFFIX,siam.org,🔰国内免流
+  - DOMAIN-SUFFIX,spiedigitallibrary.org,🔰国内免流
+  - DOMAIN-SUFFIX,springer.com,🔰国内免流
+  - DOMAIN-SUFFIX,springerlink.com,🔰国内免流
+  - DOMAIN-SUFFIX,tandfonline.com,🔰国内免流
+  - DOMAIN-SUFFIX,un.org,🔰国内免流
+  - DOMAIN-SUFFIX,uni-bielefeld.de,🔰国内免流
+  - DOMAIN-SUFFIX,webofknowledge.com,🔰国内免流
+  - DOMAIN-SUFFIX,westlaw.com,🔰国内免流
+  - DOMAIN-SUFFIX,wiley.com,🔰国内免流
+  - DOMAIN-SUFFIX,worldbank.org,🔰国内免流
+  - DOMAIN-SUFFIX,worldscientific.com,🔰国内免流
+  - DOMAIN-SUFFIX,cn,🔰国内免流
+  - DOMAIN-SUFFIX,360in.com,🔰国内免流
+  - DOMAIN-SUFFIX,51ym.me,🔰国内免流
+  - DOMAIN-SUFFIX,8686c.com,🔰国内免流
+  - DOMAIN-SUFFIX,abchina.com,🔰国内免流
+  - DOMAIN-SUFFIX,accuweather.com,🔰国内免流
+  - DOMAIN-SUFFIX,aicoinstorge.com,🔰国内免流
+  - DOMAIN-SUFFIX,air-matters.com,🔰国内免流
+  - DOMAIN-SUFFIX,air-matters.io,🔰国内免流
+  - DOMAIN-SUFFIX,aixifan.com,🔰国内免流
+  - DOMAIN-SUFFIX,amd.com,🔰国内免流
+  - DOMAIN-SUFFIX,b612.net,🔰国内免流
+  - DOMAIN-SUFFIX,bdatu.com,🔰国内免流
+  - DOMAIN-SUFFIX,beitaichufang.com,🔰国内免流
+  - DOMAIN-SUFFIX,bjango.com,🔰国内免流
+  - DOMAIN-SUFFIX,booking.com,🔰国内免流
+  - DOMAIN-SUFFIX,bstatic.com,🔰国内免流
+  - DOMAIN-SUFFIX,cailianpress.com,🔰国内免流
+  - DOMAIN-SUFFIX,camera360.com,🔰国内免流
+  - DOMAIN-SUFFIX,chinaso.com,🔰国内免流
+  - DOMAIN-SUFFIX,chua.pro,🔰国内免流
+  - DOMAIN-SUFFIX,chuimg.com,🔰国内免流
+  - DOMAIN-SUFFIX,chunyu.mobi,🔰国内免流
+  - DOMAIN-SUFFIX,chushou.tv,🔰国内免流
+  - DOMAIN-SUFFIX,cmbchina.com,🔰国内免流
+  - DOMAIN-SUFFIX,cmbimg.com,🔰国内免流
+  - DOMAIN-SUFFIX,ctrip.com,🔰国内免流
+  - DOMAIN-SUFFIX,dfcfw.com,🔰国内免流
+  - DOMAIN-SUFFIX,docschina.org,🔰国内免流
+  - DOMAIN-SUFFIX,douban.com,🔰国内免流
+  - DOMAIN-SUFFIX,doubanio.com,🔰国内免流
+  - DOMAIN-SUFFIX,douyu.com,🔰国内免流
+  - DOMAIN-SUFFIX,dxycdn.com,🔰国内免流
+  - DOMAIN-SUFFIX,dytt8.net,🔰国内免流
+  - DOMAIN-SUFFIX,eastmoney.com,🔰国内免流
+  - DOMAIN-SUFFIX,eudic.net,🔰国内免流
+  - DOMAIN-SUFFIX,feng.com,🔰国内免流
+  - DOMAIN-SUFFIX,fengkongcloud.com,🔰国内免流
+  - DOMAIN-SUFFIX,frdic.com,🔰国内免流
+  - DOMAIN-SUFFIX,futu5.com,🔰国内免流
+  - DOMAIN-SUFFIX,futunn.com,🔰国内免流
+  - DOMAIN-SUFFIX,gandi.net,🔰国内免流
+  - DOMAIN-SUFFIX,geilicdn.com,🔰国内免流
+  - DOMAIN-SUFFIX,getpricetag.com,🔰国内免流
+  - DOMAIN-SUFFIX,gifshow.com,🔰国内免流
+  - DOMAIN-SUFFIX,godic.net,🔰国内免流
+  - DOMAIN-SUFFIX,hicloud.com,🔰国内免流
+  - DOMAIN-SUFFIX,hongxiu.com,🔰国内免流
+  - DOMAIN-SUFFIX,hostbuf.com,🔰国内免流
+  - DOMAIN-SUFFIX,huxiucdn.com,🔰国内免流
+  - DOMAIN-SUFFIX,huya.com,🔰国内免流
+  - DOMAIN-SUFFIX,infinitynewtab.com,🔰国内免流
+  - DOMAIN-SUFFIX,ithome.com,🔰国内免流
+  - DOMAIN-SUFFIX,java.com,🔰国内免流
+  - DOMAIN-SUFFIX,jidian.im,🔰国内免流
+  - DOMAIN-SUFFIX,kaiyanapp.com,🔰国内免流
+  - DOMAIN-SUFFIX,kaspersky-labs.com,🔰国内免流
+  - DOMAIN-SUFFIX,keepcdn.com,🔰国内免流
+  - DOMAIN-SUFFIX,kkmh.com,🔰国内免流
+  - DOMAIN-SUFFIX,licdn.com,🔰国内免流
+  - DOMAIN-SUFFIX,linkedin.com,🔰国内免流
+  - DOMAIN-SUFFIX,loli.net,🔰国内免流
+  - DOMAIN-SUFFIX,luojilab.com,🔰国内免流
+  - DOMAIN-SUFFIX,maoyan.com,🔰国内免流
+  - DOMAIN-SUFFIX,maoyun.tv,🔰国内免流
+  - DOMAIN-SUFFIX,meituan.com,🔰国内免流
+  - DOMAIN-SUFFIX,meituan.net,🔰国内免流
+  - DOMAIN-SUFFIX,mobike.com,🔰国内免流
+  - DOMAIN-SUFFIX,moke.com,🔰国内免流
+  - DOMAIN-SUFFIX,mubu.com,🔰国内免流
+  - DOMAIN-SUFFIX,myzaker.com,🔰国内免流
+  - DOMAIN-SUFFIX,nim-lang-cn.org,🔰国内免流
+  - DOMAIN-SUFFIX,nvidia.com,🔰国内免流
+  - DOMAIN-SUFFIX,oracle.com,🔰国内免流
+  - DOMAIN-SUFFIX,paypal.com,🔰国内免流
+  - DOMAIN-SUFFIX,paypalobjects.com,🔰国内免流
+  - DOMAIN-SUFFIX,qdaily.com,🔰国内免流
+  - DOMAIN-SUFFIX,qidian.com,🔰国内免流
+  - DOMAIN-SUFFIX,qyer.com,🔰国内免流
+  - DOMAIN-SUFFIX,qyerstatic.com,🔰国内免流
+  - DOMAIN-SUFFIX,raychase.net,🔰国内免流
+  - DOMAIN-SUFFIX,ronghub.com,🔰国内免流
+  - DOMAIN-SUFFIX,ruguoapp.com,🔰国内免流
+  - DOMAIN-SUFFIX,s-reader.com,🔰国内免流
+  - DOMAIN-SUFFIX,sankuai.com,🔰国内免流
+  - DOMAIN-SUFFIX,scomper.me,🔰国内免流
+  - DOMAIN-SUFFIX,seafile.com,🔰国内免流
+  - DOMAIN-SUFFIX,sm.ms,🔰国内免流
+  - DOMAIN-SUFFIX,smzdm.com,🔰国内免流
+  - DOMAIN-SUFFIX,snapdrop.net,🔰国内免流
+  - DOMAIN-SUFFIX,snwx.com,🔰国内免流
+  - DOMAIN-SUFFIX,sspai.com,🔰国内免流
+  - DOMAIN-SUFFIX,takungpao.com,🔰国内免流
+  - DOMAIN-SUFFIX,teamviewer.com,🔰国内免流
+  - DOMAIN-SUFFIX,tianyancha.com,🔰国内免流
+  - DOMAIN-SUFFIX,udacity.com,🔰国内免流
+  - DOMAIN-SUFFIX,uning.com,🔰国内免流
+  - DOMAIN-SUFFIX,vmware.com,🔰国内免流
+  - DOMAIN-SUFFIX,weather.com,🔰国内免流
+  - DOMAIN-SUFFIX,weico.cc,🔰国内免流
+  - DOMAIN-SUFFIX,weidian.com,🔰国内免流
+  - DOMAIN-SUFFIX,xiachufang.com,🔰国内免流
+  - DOMAIN-SUFFIX,ximalaya.com,🔰国内免流
+  - DOMAIN-SUFFIX,xinhuanet.com,🔰国内免流
+  - DOMAIN-SUFFIX,xmcdn.com,🔰国内免流
+  - DOMAIN-SUFFIX,yangkeduo.com,🔰国内免流
+  - DOMAIN-SUFFIX,zhangzishi.cc,🔰国内免流
+  - DOMAIN-SUFFIX,zhihu.com,🔰国内免流
+  - DOMAIN-SUFFIX,zhimg.com,🔰国内免流
+  - DOMAIN-SUFFIX,zhuihd.com,🔰国内免流
+  - DOMAIN,download.jetbrains.com,🔰国内免流
+  - DOMAIN,images-cn.ssl-images-amazon.com,🔰国内免流
+  - IP-CIDR,119.28.28.28/32,🔰国内免流,no-resolve
+  - GEOIP,CN,🔰国内免流
+
+  - MATCH,✈️出国免流
